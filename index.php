@@ -44,8 +44,7 @@
 	/*	Footer	*/
 	function footer(){
 		echo 'Copyright &copy; 2014 - UNIKOM';
-	}
-	
+	}	
 	/*	Sum Percentage	*/
 	function percent($a, $b){
 		foreach($a as $va){
@@ -58,7 +57,7 @@
 		return round(($sum*(100/count($b))),0);
 	}
 	/*	Sort Descending	*/
-	function bsort(&$a){
+	function bsort($a){
 		for($i=0; $i<count($a)-1; $i++){
 			for($j=0; $j<=count($a)-$i; $j++){
 				if($a[$j]['percent'] < $a[$j+1]['percent']){
@@ -70,6 +69,17 @@
 		}
 		return $a;
 	}
+	/*	Matching an element array	*/
+	function match($a, $b){
+		foreach($a as $va){
+			if($va == $b){
+				return true;
+				break;
+			}
+		}
+		return false;
+	}
+
 	/*	Action	*/
 	function main(){
 		switch($_GET['!']){
@@ -112,7 +122,7 @@
 								$sign .= '</ul>';
 					
 								/*	Store the result to the Array	*/
-								$symptoms[] = array('name' => $row['name'],
+								$diseases[] = array('name' => $row['name'],
 																		'sign' => $sign, 
 																		'percent' => percent($_POST['symptoms'], explode(' ', $row['signs']))
 																	 );
@@ -120,221 +130,740 @@
 						}
 
 						/*	Sort the array of symptoms to Descending	*/
-						bsort($symptoms);												
+						$disease = bsort($diseases);
 						
-						/*	Show the Other Result of Diseases	*/
+						/*	Display the Other Result of Diseases	*/
 						$result .= '<table class="table table-striped">
 												 	<tbody>';
-						for($i=1; $i<count($symptoms); $i++){
+						for($i=1; $i<count($disease); $i++){
 							$result .= '	<tr>
 															<th>Signs</th>
-															<th>'.$symptoms[$i]['name'].'</th>
+															<th>'.$disease[$i]['name'].'</th>
 															<th style="text-align: right; padding-right: 12px;">(%)</th>
 														</tr>
 														<tr>
 															<td>'.$asigns.'</td>																
-															<td>'.$symptoms[$i]['sign'].'</td>
-															<td style="vertical-align: middle; text-align: center; font-weight: bold; font-size: 27px;">'.$symptoms[$i]['percent'].'</td>
+															<td>'.$disease[$i]['sign'].'</td>
+															<td style="vertical-align: middle; text-align: center; font-weight: bold; font-size: 27px;">'.$disease[$i]['percent'].'</td>
 														</tr>';
 						}
 						$result .= '	</tbody>
 												</table>';
 						
-						/*
-							Jumlah neuron pada input layer = count($_POST['symptoms'])
-							Jumlah neuron pada hidden layer = 4
-							Jumlah neuron pada output layer = 1
-							Learning rate = 0.1
-							Target Error = 0.001
-							Bobot Awal input[i] ke hidden[h] (v) : rand(-0.9, 0.9)
-							Bobot Awal bias[b] ke hidden[h] (bh) : rand(-0.9, 0.9)
-							Bobot Awal hidden[h] ke output[o] (w) : rand(-0.9, 0.9)
-							Bobot Awal bias ke output (b2) : rand(-0.9, 0.9)
-							
-						*/
-						
 						$sql1 = "SELECT * FROM `Symptoms`";
 						$res1 = mysql_query($sql1) or die(mysql_error());
 
+						$sql2 = "SELECT * FROM `Eye Disease`";
+						$res2 = mysql_query($sql2) or die(mysql_error());
+
 						$input = mysql_num_rows($res1);
 						$hidden = 9;
-						$output = 8;
-						$lrate = 0.1;
-						$etarget = 0.001;
-						$mepoch = 1000;
-						
-						$process .= '<table class="table table-bordered">
-													<thead style="background: #F9F9F9;">
-														<tr>
-															<th colspan="3" style="text-align: center;">Sum of Neuron</th>
-															<th rowspan="2" style="text-align: center; vertical-align: middle;">Learning Rate</th>
-															<th rowspan="2" style="text-align: center; vertical-align: middle;">Error Target</th>
-															<th rowspan="2" style="text-align: center; vertical-align: middle;">Max Epoch</th>
-														</tr>
-														<tr>
-															<th style="text-align: center;">Input Layer</th>
-															<th style="text-align: center;">Hidden Layer</th>
-															<th style="text-align: center;">Output Layer</th>															
-														</tr>
-													</thead>
-													<tbody style="text-align: center;">
-														<tr>
-															<td>'.$input.'</td>
-															<td>'.$hidden.'</td>
-															<td>'.$output.'</td>
-															<td>'.$lrate.'</td>
-															<td>'.$etarget.'</td>
-															<td>'.$mepoch.'</td>
-														</tr>
-													</tbody>
-												 </table>';
+						$output = mysql_num_rows($res2);
+						$threshold = 1;
+						$a = 0.1;
+						$e = 2.7182818285;
+						$t = -1;
+						$etarget = 0.02;
+						$epoch = 0;						
 
 						/*	Random initial weight input to hidden	*/
 						for($i=0; $i<$input; $i++){
 							for($j=0; $j<$hidden; $j++){
 								/*	Random between -0.9 and 0.9	*/
-								$V[$i][$j] = round(rand()/getrandmax()*1.8-0.9, 4);
+								$V[$i][$j][$epoch] = round(rand()/getrandmax()*1.8-0.9, 1);
 							}
 						}
-
-						/*	Random initial weight bias to hidden	*/						
+						/*	Random initial weight threshold to hidden	*/						
 						for($i=0; $i<$hidden; $i++){
 							/*	Random between -0.9 and 0.9	*/
-							$bh[$i] = round(rand()/getrandmax()*1.8-0.9, 4);
+							$th[$i][$epoch] = round(rand()/getrandmax()*1.8-0.9, 1);
 						}
-
 						/*	Random initial weight hidden to output	*/
 						for($i=0; $i<$hidden; $i++){
 							for($j=0; $j<$output; $j++){
 								/*	Random between -0.9 and 0.9	*/
-								$W[$i][$j] = round(rand()/getrandmax()*1.8-0.9, 4);
+								$W[$i][$j][$epoch] = round(rand()/getrandmax()*1.8-0.9, 1);
 							}
 						}
-
-						/*	Random initial weight bias to output	*/						
+						/*	Random initial weight threshold to output	*/						
 						for($i=0; $i<$output; $i++){
 							/*	Random between -0.9 and 0.9	*/
-							$bo[$i] = round(rand()/getrandmax()*1.8-0.9, 4);
+							$to[$i][$epoch] = round(rand()/getrandmax()*1.8-0.9, 1);
 						}
+						/*	Value of input	*/				
+						while($row1 = mysql_fetch_array($res1)){															
+							if(match($_POST['symptoms'], $row1['id'])){
+								/*	If sign is checked	*/
+								$ai[] = 1;
+							}else{
+								$ai[] = 0;
+							}
+						}
+						/*	Value of output, hard limit activation function	*/
+						for($i=0; $i<count($diseases); $i++){							
+							if($diseases[$i]['percent'] > 0){
+								$Y[][$epoch] = 1;
+							}else{
+								/*	If percentage less equal than 0	*/
+								$Y[][$epoch] = 0;
+							}
+						}
+						/*	Activation	Function	*/
+						do{							
+							$epoch++;
+							/*	Actual output hidden layer	*/
+							for($i=0; $i<$hidden; $i++){
+								$ee = 0;
+								for($j=0; $j<$input; $j++){
+									$ee += $ai[$j]*$V[$j][$i][$epoch-1];
+								}
+								$Z[$i][$epoch] = round(1/(1+(pow($e, -($ee-$th[$i][$epoch-1])))),4);								
+							}
+							/*	Actual output output layer	*/
+							for($i=0; $i<$output; $i++){
+								$ee = 0;
+								for($j=0; $j<$hidden; $j++){
+									$ee += $Z[$j][$epoch]*$W[$j][$i][$epoch-1];
+								}
+								$Y[$i][$epoch] = round(1/(1+(pow($e, -($ee-$to[$i][$epoch-1])))),4);
+							}
+							/*	Error	*/
+							for($i=0; $i<$output; $i++){
+								$error[$i][$epoch] = $Y[$i][0] - $Y[$i][$epoch];
+							}
+							/*	Error gradient output layer	*/
+							for($i=0; $i<$output; $i++){
+								$errno[$i][$epoch] = round($Y[$i][$epoch]*(1-$Y[$i][$epoch])*$error[$i][$epoch],4);
+							}
+							/*	Weight correction output layer	*/
+							for($i=0; $i<$hidden; $i++){
+								for($j=0; $j<$output; $j++){								
+									$DW[$i][$j][$epoch] = round($a*$Z[$i][$epoch]*$errno[$j][$epoch],4);
+								}
+							}
+							/*	Weight correction threshold output layer	*/
+							for($i=0; $i<$output; $i++){
+								$Dto[$i][$epoch] = round($a*$t*$errno[$i][$epoch],4);
+							}
+							/*	Error gradient hidden layer	*/
+							for($i=0; $i<$hidden; $i++){
+								$er = 0;
+								for($j=0; $j<$output; $j++){
+									$er += $errno[$j][$epoch]*$W[$i][$j][$epoch-1];
+								}
+								$errnh[$i][$epoch] = round($Z[$i][$epoch]*(1-$Z[$i][$epoch])*$er,4);
+							}
+							/*	Weight correction hidden layer	*/
+							for($i=0; $i<$input; $i++){
+								for($j=0; $j<$hidden; $j++){
+									$DV[$i][$j][$epoch] = round($a*$ai[$i]*$errnh[$j][$epoch],4);
+								}
+							}
+							/*	Weight correction threshold hidden layer	*/
+							for($i=0; $i<$hidden; $i++){
+								$Dth[$i][$epoch] = round($a*$t*$errnh[$i][$epoch],4);
+							}
+							/*	Update weight input to hidden	*/
+							for($i=0; $i<$input; $i++){
+								for($j=0; $j<$hidden; $j++){
+									$V[$i][$j][$epoch] = $V[$i][$j][$epoch-1]+$DV[$i][$j][$epoch];
+								}
+							}
+							/*	Update weight threshold to hidden	*/						
+							for($i=0; $i<$hidden; $i++){								
+								$th[$i][$epoch] = $th[$i][$epoch-1]+$Dth[$i][$epoch];
+							}
+							/*	Update weight hidden to output	*/
+							for($i=0; $i<$hidden; $i++){
+								for($j=0; $j<$output; $j++){									
+									$W[$i][$j][$epoch] = $W[$i][$j][$epoch-1]+$DW[$i][$j][$epoch];
+								}
+							}
+							/*	Update weight threshold to output	*/						
+							for($i=0; $i<$output; $i++){								
+								$to[$i][$epoch] = $to[$i][$epoch-1]+$Dto[$i][$epoch];
+							}
+							/*	Sum of squared error	*/
+							for($i=0; $i<$output; $i++){
+								$serror[$epoch] += pow($error[$i][$epoch],2);
+							}
+						}while(($serror[$epoch] > $etarget));
 
-						$initial .= '<ul class="ul-table">
-													<li>Initial weight input layer <i>x</i> to hidden layer <i>h</i></li>
-														<p>
-															<table class="table table-bordered table-hover">
-																<thead>
-																	<tr>
-																		<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
-																		for($i=0; $i<$hidden; $i++){
-																			$initial .= '	<th style="text-align: center;">h<sub>'.($i+1).'</sub></th>';
-																		}
-										$initial .= '	</tr>
-																</thead>
-																<tbody>';
-																	for($i=0; $i<$input; $i++){
-																		$initial .= '<tr>																														
-																										<th style="text-align: center; border-right: 2px solid #DDDDDD;">x<sub>'.($i+1).'</sub></th>';
-																		for($j=0; $j<$hidden; $j++){
-																			$initial .= '	<td style="text-align: center;">'.$V[$i][$j].'</td>';
-																		}
-																		$initial .= '</tr>';
-																	}
-										$initial .= '</tbody>
-															</table>
-														</p>
-													<li>Initial weight bias layer <i>b</i> to hidden layer <i>h</i></li>
-														<p>
-															<table class="table table-bordered table-hover">
-																<thead>
-																	<tr>
-																		<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
-																		for($i=0; $i<$hidden; $i++){
-																			$initial .= '	<th style="text-align: center;">h<sub>'.($i+1).'</sub></th>';
-																		}
-										$initial .= '	</tr>
-																</thead>
-																<tbody>
-																	<tr>
-																		<th style="text-align: center; border-right: 2px solid #DDDDDD;">b</th>';
-																	for($i=0; $i<$hidden; $i++){
-																		$initial .= '<td style="text-align: center;">'.$bh[$i].'</td>';
-																	}
-										$initial .= '	</tr>
-																</tbody>
-															</table>
-														</p>
-													<li>Initial weight hidden layer <i>h</i> to output layer <i>y</i></li>
-														<p>
-															<table class="table table-bordered table-hover">
-																<thead>
-																	<tr>
-																		<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
-																		for($i=0; $i<$output; $i++){
-																			$initial .= '	<th style="text-align: center;">y<sub>'.($i+1).'</sub></th>';
-																		}
-										$initial .= '	</tr>
-																</thead>
-																<tbody>';
-																	for($i=0; $i<$hidden; $i++){
-																		$initial .= '<tr>																														
-																										<th style="text-align: center; border-right: 2px solid #DDDDDD;">h<sub>'.($i+1).'</sub></th>';
-																		for($j=0; $j<$output; $j++){
-																			$initial .= '	<td style="text-align: center;">'.$W[$i][$j].'</td>';
-																		}
-																		$initial .= '</tr>';
-																	}
-										$initial .= '</tbody>
-															</table>
-														</p>
-													<li>Initial weight bias layer <i>b</i> to output layer <i>y</i></li>
-														<p>
-															<table class="table table-bordered table-hover">
-																<thead>
-																	<tr>
-																		<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
-																		for($i=0; $i<$output; $i++){
-																			$initial .= '	<th style="text-align: center;">y<sub>'.($i+1).'</sub></th>';
-																		}
-										$initial .= '	</tr>
-																</thead>
-																<tbody>
-																	<tr>
-																		<th style="text-align: center; border-right: 2px solid #DDDDDD;">b</th>';
-																	for($i=0; $i<$output; $i++){
-																		$initial .= '<td style="text-align: center;">'.$bh[$i].'</td>';
-																	}
-										$initial .= '	</tr>
-																</tbody>
-															</table>
-														</p>
-												</ul>';
+						/*	Display Inputs table	*/
+						$inputs .= '<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
+															<th colspan="'.$input.'" style="text-align:center;">Inputs</th>
+														</tr>
+														<tr>';
+														for($i=0; $i<$input; $i++){
+															$inputs .= '<th style=" text-align:center;">x<sub>'.($i+1).'</sub></th>';
+														}
+						$inputs .= '		</tr>
+													</thead>
+													<tbody>
+														<tr>';														
+														foreach($ai as $vai){
+															$inputs .= '<td style="text-align:center;">'.$vai.'</td>';
+														}
+						$inputs .= '		</tr>
+													</tbody>
+												</table>';
 
-						$process .= '<div class="panel-group" id="bccordion">
-												 	<div class="panel panel-default">
-												 		<div class="panel-heading">												 			
-												 			<h4 class="panel-title">												 				
-												 				<a data-toggle="collapse" data-parent="#bccordion" href="#initial" title="Click to Show">Initial</a>
-												 			</h4>
-												 		</div>
-												 		<div id="initial" class="panel-collapse collapse">
-												 			<div class="panel-body">
-												 				'.$initial.'
-												 			</div>
-												 		</div>
-												 	</div>												 	
-												 </div>';
+						/*	Display Desired Outputs table	*/
+						$doutputs .= '<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
+															<th colspan="'.$output.'" style="text-align:center;">Desired Outputs</th>
+														</tr>
+														<tr>';
+														for($i=0; $i<$output; $i++){
+															$doutputs .= '<th style="text-align:center;">y<sub>'.($i+1).'</sub></th>';
+														}
+						$doutputs .= '	</tr>
+													</thead>
+													<tbody>
+														<tr>';														
+														foreach($Y as $vY){
+															$doutputs .= '<td style="text-align:center;">'.$vY[0].'</td>';
+														}
+						$doutputs .= '		</tr>
+													</tbody>
+												</table>';
+
+						/*	Display init table	*/
+						$init .= '<table class="table table-bordered table-hover">
+												<thead style="background: #F9F9F9;">
+													<tr>
+														<th colspan="4" style="text-align: center;">Sum of Neuron</th>
+														<th rowspan="2" style="text-align: center; vertical-align: middle;">Learning Rate</th>
+														<th rowspan="2" style="text-align: center; vertical-align: middle;">Sum of Squared Error</th>														
+													</tr>
+													<tr>
+														<th style="text-align: center;">Input Layer</th>
+														<th style="text-align: center;">Hidden Layer</th>
+														<th style="text-align: center;">Output Layer</th>
+														<th style="text-align: center;">Threshold Layer</th>
+													</tr>
+												</thead>
+												<tbody style="text-align: center;">
+													<tr>
+														<td>'.$input.'</td>
+														<td>'.$hidden.'</td>
+														<td>'.$output.'</td>
+														<td>'.$threshold.'</td>
+														<td>'.$a.'</td>
+														<td>'.$etarget.'</td>														
+													</tr>
+												</tbody>
+											 </table>';
+
+						/*	Display initial weight input to hidden table	*/
+						$initxz .= '<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
+															<th colspan="'.($hidden+1).'" style="text-align: center;">Initial weight input layer to hidden layer</th>
+														</tr>
+														<tr>
+															<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+															for($i=0; $i<$hidden; $i++){
+																$initxz .= '	<th style="text-align: center;">z<sub>'.($i+1).'</sub></th>';
+															}
+						$initxz .= '		</tr>
+													</thead>
+													<tbody>';
+														for($i=0; $i<$input; $i++){
+															$initxz .= '<tr>																														
+																						<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">x<sub>'.($i+1).'</sub></th>';
+															for($j=0; $j<$hidden; $j++){
+																$initxz .= '	<td style="text-align: center;">'.$V[$i][$j][0].'</td>';
+															}
+															$initxz .= '</tr>';
+														}
+						$initxz .= '		<tr>
+															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+															for($i=0; $i<$hidden; $i++){
+																$initxz .= '<td style="text-align: center;">'.$th[$i][0].'</td>';
+															}
+						$initxz .= '		</tr>
+													</tbody>
+												</table>';
+
+						/*	Display initial weight hidden to output table	*/
+						$initzy .= '<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
+															<th colspan="'.($output+1).'" style="text-align: center;">Initial weight hidden layer to output layer</th>
+														</tr>
+														<tr>
+															<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+															for($i=0; $i<$output; $i++){
+																$initzy .= '<th style="text-align: center;">y<sub>'.($i+1).'</sub></th>';
+															}
+						$initzy .= '		</tr>
+													</thead>
+													<tbody>';
+														for($i=0; $i<$hidden; $i++){
+															$initzy .= '<tr>																														
+																						<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($i+1).'</sub></th>';
+															for($j=0; $j<$output; $j++){
+																$initzy .= '<td style="text-align: center;">'.$W[$i][$j][0].'</td>';
+															}
+															$initzy .= '</tr>';
+														}
+						$initzy .= '		<tr>
+															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+															for($i=0; $i<$output; $i++){
+																$initzy .= '<td style="text-align: center;">'.$to[$i][0].'</td>';
+															}
+						$initzy .= '		</tr>
+													</tbody>
+												</table>';
 						
-						/*	Show the Result of Disease	*/
+						/*	Display initialisation panel	*/
+						$initialisation .= '<div class="panel panel-default">
+																	<div class="panel-heading">												 			
+																		<h4 class="panel-title">												 				
+																			<a data-toggle="collapse" data-parent="#bccordion" href="#initialisation" title="Initialisation">Initialisation</a>
+																		</h4>
+																	</div>
+																	<div id="initialisation" class="panel-collapse collapse">
+																		<div class="panel-body">
+																			'.$initxz.'
+																			'.$initzy.'
+																		</div>
+																	</div>
+																</div>';
+
+						/*	Display activation table	*/
+						$aut .= '<table class="table table-striped">
+											<tbody>
+												<tr>
+													<th colspan="'.$hidden.'">Epoch 0</th>
+												</tr>
+												<tr>
+													<td>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$hidden.'" style="text-align:center;">Actual Outputs</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$aut .= '<th style="text-align:center;">z<sub>'.($j+1).'</sub></th>';
+																	}
+						$aut .= '						</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$aut .= '<td style="text-align:center;">'.$Z[$j][1].'</td>';
+																	}
+						$aut .= '						</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$output.'" style="text-align:center;">Actual Outputs</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<th style="text-align:center;">y<sub>'.($j+1).'</sub></th>';
+																	}
+						$aut .= '						</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<td style="text-align:center;">'.$Y[$j][1].'</td>';
+																	}
+						$aut .= '						</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$output.'" style="text-align:center;">Error</th>
+																	<th rowspan="2" style="text-align: center; vertical-align: middle;">Sum of Squared Error</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<th style="text-align:center;">e<sub>'.($j+1).'</sub></th>';
+																	}
+						$aut .= '						</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<td style="text-align:center;">'.$error[$j][1].'</td>';
+																	}
+						$aut .= '							<td style="text-align: center;">'.(round($serror[1],8)).'</td>
+																</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$output.'" style="text-align:center;">Error Gradient</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<th style="text-align:center;">y<sub>'.($j+1).'</sub></th>';
+																	}
+						$aut .= '						</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<td style="text-align:center;">'.$errno[$j][1].'</td>';
+																	}
+						$aut .= '						</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.($output+1).'" style="text-align:center;">Weight Correction</th>
+																<tr>
+																	<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<th style="text-align: center;">y<sub>'.($j+1).'</sub></th>';
+																	}												
+						$aut .= '						</tr>
+															</thead>
+															<tbody>';
+																for($j=0; $j<$hidden; $j++){
+																	$aut .= '<tr>																														
+																						<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($j+1).'</sub></th>';
+																	for($k=0; $k<$output; $k++){
+																		$aut .= '<td style="text-align: center;">'.$DW[$j][$k][1].'</td>';
+																	}
+																	$aut .= '</tr>';
+																}							
+						$aut .= '						<tr>
+																	<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+																	for($j=0; $j<$output; $j++){
+																		$aut .= '<td style="text-align: center;">'.$Dto[$j][1].'</td>';
+																	}
+						$aut .= '						</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$hidden.'" style="text-align:center;">Error Gradient</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$aut .= '<th style="text-align:center;">z<sub>'.($j+1).'</sub></th>';
+																	}
+						$aut .= '						</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$aut .= '<td style="text-align:center;">'.$errnh[$j][1].'</td>';
+																	}
+						$aut .= '						</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.($hidden+1).'" style="text-align:center;">Weight Correction</th>
+																<tr>
+																	<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+																	for($j=0; $j<$hidden; $j++){
+																		$aut .= '<th style="text-align: center;">z<sub>'.($j+1).'</sub></th>';
+																	}												
+						$aut .= '						</tr>
+															</thead>
+															<tbody>';
+																for($j=0; $j<$input; $j++){
+																	$aut .= '<tr>																														
+																						<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">x<sub>'.($j+1).'</sub></th>';
+																	for($k=0; $k<$hidden; $k++){
+																		$aut .= '<td style="text-align: center;">'.$DV[$j][$k][1].'</td>';
+																	}
+																	$aut .= '</tr>';
+																}							
+						$aut .= '						<tr>
+																	<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+																	for($j=0; $j<$hidden; $j++){
+																		$aut .= '<td style="text-align: center;">'.$Dth[$j][1].'</td>';
+																	}
+						$aut .= '						</tr>
+															</tbody>															
+														</table>';
+						$aut .= '	</tbody>
+										</table>';	
+						
+						/*	Display activation panel	*/
+						$activation .= '<div class="panel panel-default">
+															<div class="panel-heading">												 			
+																<h4 class="panel-title">												 				
+																	<a data-toggle="collapse" data-parent="#bccordion" href="#activation" title="Activation">Activation</a>
+																</h4>
+															</div>
+															<div id="activation" class="panel-collapse collapse">
+																<div class="panel-body">
+																'.$aut.'
+																</div>
+															</div>
+														</div>';
+
+						/*	Display iteration table	*/
+						$out .= '<table class="table table-striped">
+											<tbody>';
+						for($i=2; $i<=$epoch; $i++){
+							$out .= '	<tr>
+													<th colspan="'.$hidden.'">Epoch '.($i-1).'</th>
+												</tr>
+												<tr>
+													<td>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$hidden.'" style="text-align:center;">Actual Outputs</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$out .= '<th style="text-align:center;">z<sub>'.($j+1).'</sub></th>';
+																	}
+							$out .= '					</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$out .= '<td style="text-align:center;">'.$Z[$j][$i].'</td>';
+																	}
+							$out .= '					</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$output.'" style="text-align:center;">Actual Outputs</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<th style="text-align:center;">y<sub>'.($j+1).'</sub></th>';
+																	}
+							$out .= '					</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<td style="text-align:center;">'.$Y[$j][$i].'</td>';
+																	}
+							$out .= '					</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$output.'" style="text-align:center;">Error</th>
+																	<th rowspan="2" style="text-align: center; vertical-align: middle;">Sum of Squared Error</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<th style="text-align:center;">e<sub>'.($j+1).'</sub></th>';
+																	}
+							$out .= '					</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<td style="text-align:center;">'.$error[$j][$i].'</td>';
+																	}
+							$out .= '						<td style="text-align: center;">'.(round($serror[$i],8)).'</td>
+																</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$output.'" style="text-align:center;">Error Gradient</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<th style="text-align:center;">y<sub>'.($j+1).'</sub></th>';
+																	}
+							$out .= '					</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<td style="text-align:center;">'.$errno[$j][$i].'</td>';
+																	}
+							$out .= '					</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.($output+1).'" style="text-align:center;">Weight Correction</th>
+																<tr>
+																	<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<th style="text-align: center;">y<sub>'.($j+1).'</sub></th>';
+																	}												
+							$out .= '					</tr>
+															</thead>
+															<tbody>';
+																for($j=0; $j<$hidden; $j++){
+																	$out .= '<tr>																														
+																						<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($j+1).'</sub></th>';
+																	for($k=0; $k<$output; $k++){
+																		$out .= '<td style="text-align: center;">'.$DW[$j][$k][$i].'</td>';
+																	}
+																	$out .= '</tr>';
+																}							
+							$out .= '					<tr>
+																	<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+																	for($j=0; $j<$output; $j++){
+																		$out .= '<td style="text-align: center;">'.$Dto[$j][$i].'</td>';
+																	}
+							$out .= '					</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.$hidden.'" style="text-align:center;">Error Gradient</th>
+																</tr>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$out .= '<th style="text-align:center;">z<sub>'.($j+1).'</sub></th>';
+																	}
+							$out .= '					</tr>
+															</thead>
+															<tbody>
+																<tr>';
+																	for($j=0; $j<$hidden; $j++){
+																		$out .= '<td style="text-align:center;">'.$errnh[$j][$i].'</td>';
+																	}
+							$out .= '					</tr>
+															</tbody>															
+														</table>
+														<table class="table table-bordered table-hover">
+															<thead style="background: #F9F9F9;">
+																<tr>																	
+																	<th colspan="'.($hidden+1).'" style="text-align:center;">Weight Correction</th>
+																<tr>
+																	<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+																	for($j=0; $j<$hidden; $j++){
+																		$out .= '<th style="text-align: center;">z<sub>'.($j+1).'</sub></th>';
+																	}												
+							$out .= '					</tr>
+															</thead>
+															<tbody>';
+																for($j=0; $j<$input; $j++){
+																	$out .= '<tr>																														
+																						<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">x<sub>'.($j+1).'</sub></th>';
+																	for($k=0; $k<$hidden; $k++){
+																		$out .= '<td style="text-align: center;">'.$DV[$j][$k][$i].'</td>';
+																	}
+																	$out .= '</tr>';
+																}							
+							$out .= '					<tr>
+																	<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+																	for($j=0; $j<$hidden; $j++){
+																		$out .= '<td style="text-align: center;">'.$Dth[$j][$i].'</td>';
+																	}
+							$out .= '					</tr>
+															</tbody>															
+														</table>';
+							$out .= '		</td>
+												</tr>';
+						}
+						$out .= '	</tbody>
+										</table>';						
+
+						/*	Display iteration panel	*/
+						$iteration .= '<div class="panel panel-default">
+															<div class="panel-heading">												 			
+																<h4 class="panel-title">												 				
+																	<a data-toggle="collapse" data-parent="#bccordion" href="#iteration" title="Iteration">Iteration</a>
+																</h4>
+															</div>
+															<div id="iteration" class="panel-collapse collapse">
+																<div class="panel-body">
+																'.$out.'
+																</div>
+															</div>
+														</div>';
+
+						/*	Display Actual Outputs table	*/
+						$aoutputs .= '<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
+															<th colspan="'.$output.'" style="text-align:center;">Actual Outputs</th>
+														</tr>
+														<tr>';
+														for($i=0; $i<$output; $i++){
+															$aoutputs .= '<th style="text-align:center;">y<sub>'.($i+1).'</sub></th>';
+														}
+						$aoutputs .= '	</tr>
+													</thead>
+													<tbody>
+														<tr>';														
+														for($i=0; $i<$output; $i++){
+															$aoutputs .= '<td style="text-align: center;">'.$Y[$i][$epoch].'</td>';
+														}
+						$aoutputs .= '	</tr>
+													</tbody>
+												</table>';
+
+						/*	Display Error table	*/
+						$eoutputs .= '<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
+															<th colspan="'.$output.'" style="text-align:center;">Error</th>
+															<th rowspan="2" style="text-align: center; vertical-align: middle;">Sum of Squared Error</th>
+														</tr>
+														<tr>';
+														for($i=0; $i<$output; $i++){
+															$eoutputs .= '<th style="text-align:center;">e<sub>'.($i+1).'</sub></th>';
+														}
+						$eoutputs .= '	</tr>
+													</thead>
+													<tbody>
+														<tr>';
+														for($i=0; $i<$output; $i++){															
+															$eoutputs .= '<td style="text-align: center;">'.$error[$i][$epoch].'</td>';
+														}
+						$eoutputs .= '		<td style="text-align: center;">'.(round($serror[$epoch],8)).'</td>
+														</tr>
+													</tbody>
+												</table>';
+
+						/*	Display process panel	*/
+						$process .= $init.
+												$inputs.
+												$doutputs.
+												'<div class="panel-group" id="bccordion">
+													'.$initialisation.'
+													'.$activation.'
+													'.$iteration.'
+												</div>
+												<br>'
+												.$aoutputs
+												.$eoutputs;
+						
+						/*	Display the Result of Disease	*/
 						$content .= '<table class="table table-striped">
 													<tbody>
 														<tr>
 															<th>Signs</th>
-															<th>'.$symptoms[0]['name'].'</th>
+															<th>'.$disease[0]['name'].'</th>
 															<th style="text-align: center;">(%)</th>
 														</tr>
 														<tr>
 															<td>'.$asigns.'</td>																
-															<td>'.$symptoms[0]['sign'].'</td>
-															<td style="vertical-align: middle; text-align: center; font-weight: bold; font-size: 27px;">'.$symptoms[0]['percent'].'</td>
+															<td>'.$disease[0]['sign'].'</td>
+															<td style="vertical-align: middle; text-align: center; font-weight: bold; font-size: 27px;">'.$disease[0]['percent'].'</td>
 														</tr>
 													</tbody>
 												 </table>
@@ -343,7 +872,7 @@
 												 	<div class="panel panel-default">
 												 		<div class="panel-heading">												 			
 												 			<h4 class="panel-title">												 				
-												 				<a data-toggle="collapse" data-parent="#accordion" href="#result" title="Click to Show">Other Results</a>
+												 				<a data-toggle="collapse" data-parent="#accordion" href="#result" title="Other Result">Other Results</a>
 												 			</h4>
 												 		</div>
 												 		<div id="result" class="panel-collapse collapse">
@@ -355,12 +884,13 @@
 												 	<div class="panel panel-default">
 												 		<div class="panel-heading">
 												 			<h4 class="panel-title">
-												 				<a data-toggle="collapse" data-parent="#accordion" href="#process" title="Click to Show">Process</a>
+												 				<a data-toggle="collapse" data-parent="#accordion" href="#process" title="Process">Process</a>
 												 			</h4>
 												 		</div>
 												 		<div id="process" class="panel-collapse collapse">
-												 			<div class="panel-body">
-												 				'.$process.'
+												 			<div class="panel-body">																
+												 				'.$process.'												 				
+												 				<i>Finished with '.($epoch+1).' epochs . . .</i>
 												 			</div>
 												 		</div>
 												 	</div>
