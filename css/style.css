@@ -1,0 +1,141 @@
+@charset "UTF-8";
+html,
+body {  
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+  background: #f9f9f9;
+  cursor: default;
+}
+
+a {
+  color: #3c8dbc;
+}
+
+a:hover,
+a:active,
+a:focus {
+  outline: none;
+  text-decoration: none;
+  color: #72afd2;
+}
+
+.btn {
+  font-weight: 500;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  -webkit-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
+  -moz-box-shadow: inset 0px -2px 0px 0px rgba(0, 0, 0, 0.09);
+  box-shadow: inset 0px -1px 0px 0px rgba(0, 0, 0, 0.09);
+}
+
+.btn.btn-default {
+  background-color: #fafafa;
+  color: #666;
+  border-color: #ddd;
+  border-bottom-color: #ddd;
+}
+
+.btn.btn-default:hover,
+.btn.btn-default:active,
+.btn.btn-default.hover {
+  background-color: #f4f4f4!important;
+}
+
+.btn:active {
+  -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  -moz-box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+
+.btn:focus {
+  outline: none;
+}
+
+.container {
+	background: none;
+	margin: 5px auto;
+	width: 860px;
+}
+
+/*	Header	*/
+.header {
+	background: #300A24;
+	width: auto;
+	padding-top: 7px;
+	height: 90px;
+	overflow: hidden;	
+	text-align: center;
+	color: #FFFFFF;
+	border-radius: 0.7em 0.7em 0 0;
+}
+
+/*	Navigation	*/
+.navigation {
+	background: #F0F0F0;
+	width: auto;
+	height: 25px;
+	margin: 0;
+	padding: 2px 0 7px 0;
+	box-shadow: inset 0px -1px 2px 1px rgba(0, 0, 0, 0.125);
+}
+
+.navigation ul{
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+
+.navigation ul li {
+	display: inline;
+	padding: 3px 0;
+}
+
+.navigation ul li a {	
+	text-decoration: none;
+	color: #2B3F00;
+	padding: 0 1em 0;	
+	border-right: 1px solid #BFBFBF;
+}
+
+/*	Content	*/
+.content {	
+	background: #FFFFFF;	
+	width: auto;
+	min-height: 360px;
+	padding: 10px;	
+	word-wrap: break-word;
+	box-shadow: inset 0px -1px	5px 2px rgba(0, 0, 0, 0.125);	
+}
+
+/*	Footer	*/
+.footer {
+	background: #300A24;
+	width: auto;	
+	height: 25px;
+	padding: 5px 0 10px 0;
+	margin: auto;
+	overflow: hidden;	
+	text-align: center;
+	color: #FFFFFF;
+	font-size: smaller;
+	clear: both;
+	border-radius: 0 0 0.85em 0.85em;
+}
+
+.no-padding {
+  padding: 0px !important;
+  padding-top: 0px;
+  padding-right-value: 0px;
+  padding-bottom: 0px;
+  padding-left-value: 0px;
+  padding-left-ltr-source: physical;
+  padding-left-rtl-source: physical;
+  padding-right-ltr-source: physical;
+  padding-right-rtl-source: physical;
+}
+
+.ul-table {
+	padding-left: 15px;
+}
