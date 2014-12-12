@@ -39,6 +39,8 @@
 		echo '<ul>
 						<li><a href="?!=home">Home</a></li>
 						<li><a href="?!=disease">Eye Disease</a></li>
+						<li><a href="?!=model">Network Architecture</a></li>
+						<li><a href="?!=algorithm">Algorithm</a></li>
 					</ul>';
 	}
 	/*	Footer	*/
@@ -117,7 +119,7 @@
 	}
 	/*	Value of error target	*/
 	function errortarget(){
-		return 0.02;
+		return 0.03;
 	}
 	/*	Value of input layer	*/
 	function vinput($a){
@@ -603,6 +605,35 @@
 												<table class="table table-bordered table-hover">
 													<thead style="background: #F9F9F9;">
 														<tr>
+															<th colspan="'.($output+1).'" style="text-align: center;">Weight</th>
+														</tr>
+														<tr>
+															<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+															for($i=0; $i<$output; $i++){
+																$aut .= '<th style="text-align: center;">y<sub>'.($i+1).'</sub></th>';
+															}
+				$aut .= '						</tr>
+													</thead>
+													<tbody>';
+														for($i=0; $i<$hidden; $i++){
+															$aut .= '<tr>
+																				<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($i+1).'</sub></th>';
+															for($j=0; $j<$output; $j++){
+																$aut .= '<td style="text-align: center;" title="[Z'.($i+1).',Y'.($j+1).']">'.$W[$i][$j][1].'</td>';
+															}
+															$aut .= '</tr>';
+														}
+				$aut .= '						<tr>
+															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+															for($i=0; $i<$output; $i++){
+																$aut .= '<td style="text-align: center;" title="[θ,Y'.($i+1).']">'.$to[$i][1].'</td>';
+															}
+				$aut .= '						</tr>
+													</tbody>
+												</table>
+												<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
 															<th colspan="'.$hidden.'" style="text-align:center;">Error Gradient</th>
 														</tr>
 														<tr>';
@@ -675,35 +706,6 @@
 															}
 				$aut .= '						</tr>
 													</tbody>
-												</table>
-												<table class="table table-bordered table-hover">
-													<thead style="background: #F9F9F9;">
-														<tr>
-															<th colspan="'.($output+1).'" style="text-align: center;">Weight</th>
-														</tr>
-														<tr>
-															<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
-															for($i=0; $i<$output; $i++){
-																$aut .= '<th style="text-align: center;">y<sub>'.($i+1).'</sub></th>';
-															}
-				$aut .= '						</tr>
-													</thead>
-													<tbody>';
-														for($i=0; $i<$hidden; $i++){
-															$aut .= '<tr>
-																				<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($i+1).'</sub></th>';
-															for($j=0; $j<$output; $j++){
-																$aut .= '<td style="text-align: center;" title="[Z'.($i+1).',Y'.($j+1).']">'.$W[$i][$j][1].'</td>';
-															}
-															$aut .= '</tr>';
-														}
-				$aut .= '						<tr>
-															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
-															for($i=0; $i<$output; $i++){
-																$aut .= '<td style="text-align: center;" title="[θ,Y'.($i+1).']">'.$to[$i][1].'</td>';
-															}
-				$aut .= '						</tr>
-													</tbody>
 												</table>';
 				$aut .= '			</td>
 										</tr>
@@ -714,7 +716,7 @@
 				$activation .= '<div class="panel panel-default">
 													<div class="panel-heading">
 														<h4 class="panel-title">
-															<a data-toggle="collapse" data-parent="#bccordion" href="#activation" title="Activation">Activation</a>
+															<a data-toggle="collapse" data-parent="#bccordion" href="#activation" title="Activation and Weight Training">Activation and Weight Training</a>
 														</h4>
 													</div>
 													<div id="activation" class="panel-collapse collapse">
@@ -842,6 +844,35 @@
 												<table class="table table-bordered table-hover">
 													<thead style="background: #F9F9F9;">
 														<tr>
+															<th colspan="'.($output+1).'" style="text-align: center;">Weight</th>
+														</tr>
+														<tr>
+															<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
+															for($j=0; $j<$output; $j++){
+																$out .= '<th style="text-align: center;">y<sub>'.($j+1).'</sub></th>';
+															}
+					$out .= '					</tr>
+													</thead>
+													<tbody>';
+														for($j=0; $j<$hidden; $j++){
+															$out .= '<tr>
+																				<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($j+1).'</sub></th>';
+															for($k=0; $k<$output; $k++){
+																$out .= '<td style="text-align: center;" title="[Z'.($j+1).',Y'.($k+1).']">'.$W[$j][$k][$i].'</td>';
+															}
+															$out .= '</tr>';
+														}
+					$out .= '					<tr>
+															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
+															for($j=0; $j<$output; $j++){
+																$out .= '<td style="text-align: center;" title="[θ,Y'.($j+1).']">'.$to[$j][$i].'</td>';
+															}
+					$out .= '					</tr>
+													</tbody>
+												</table>
+												<table class="table table-bordered table-hover">
+													<thead style="background: #F9F9F9;">
+														<tr>
 															<th colspan="'.$hidden.'" style="text-align:center;">Error Gradient</th>
 														</tr>
 														<tr>';
@@ -885,7 +916,7 @@
 															}
 					$out .= '					</tr>
 													</tbody>
-												</table>
+												</table>												
 												<table class="table table-bordered table-hover">
 													<thead style="background: #F9F9F9;">
 														<tr>
@@ -911,35 +942,6 @@
 															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
 															for($j=0; $j<$hidden; $j++){
 																$out .= '<td style="text-align: center;" title="[θ,Z'.($j+1).']">'.$th[$j][$i].'</td>';
-															}
-					$out .= '					</tr>
-													</tbody>
-												</table>
-												<table class="table table-bordered table-hover">
-													<thead style="background: #F9F9F9;">
-														<tr>
-															<th colspan="'.($output+1).'" style="text-align: center;">Weight</th>
-														</tr>
-														<tr>
-															<th style="text-align: center; border-right: 2px solid #DDDDDD;">#</th>';
-															for($j=0; $j<$output; $j++){
-																$out .= '<th style="text-align: center;">y<sub>'.($j+1).'</sub></th>';
-															}
-					$out .= '					</tr>
-													</thead>
-													<tbody>';
-														for($j=0; $j<$hidden; $j++){
-															$out .= '<tr>
-																				<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">z<sub>'.($j+1).'</sub></th>';
-															for($k=0; $k<$output; $k++){
-																$out .= '<td style="text-align: center;" title="[Z'.($j+1).',Y'.($k+1).']">'.$W[$j][$k][$i].'</td>';
-															}
-															$out .= '</tr>';
-														}
-					$out .= '					<tr>
-															<th style="background: #F9F9F9; text-align: center; border-right: 2px solid #DDDDDD;">θ</th>';
-															for($j=0; $j<$output; $j++){
-																$out .= '<td style="text-align: center;" title="[θ,Y'.($j+1).']">'.$to[$j][$i].'</td>';
 															}
 					$out .= '					</tr>
 													</tbody>
@@ -1070,6 +1072,14 @@
 		mysql_close();
 		echo $content;
 	}
+	/*	Network Architecture	*/
+	function model(){
+		echo '<img src="ss/8.png" width="100%">';
+	}
+	/*	Algorithm	*/
+	function algorithm(){		
+		echo '<img src="ss/9.png" width="100%">';
+	}
 	/*	Eye Disease	*/
 	function disease(){
 		mysql_open();
@@ -1164,6 +1174,12 @@
 				break;
 			case 'disease' :
 				disease();
+				break;
+			case 'model' :
+				model();
+				break;
+			case 'algorithm' :
+				algorithm();
 				break;
 			default :
 				home();
