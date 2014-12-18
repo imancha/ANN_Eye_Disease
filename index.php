@@ -1094,8 +1094,9 @@
 										<tbody>
 											<tr>
 												<th>#</th>
-												<th>Name</th>
-												<th>Signs</th>
+												<th width="25%">Name</th>
+												<th width="50%">Signs</th>
+												<th>Figures</th>
 											</tr>';
 
 			while($row = mysql_fetch_array($res)){
@@ -1114,6 +1115,7 @@
 					$content .= '		</ul>';
 				}
 				$content .=		 '</td>
+												<td><img src="ss/1'.$row['id'].'.png" width="100%"></td>
 											</tr>';
 			}
 
